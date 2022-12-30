@@ -1,0 +1,31 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+// Synchronous code
+// function synchronousCall(): void {
+//     const readFileText = fs.readFileSync('./txt/input.txt', 'utf-8');
+//     console.log(readFileText);
+//     const textOut = `This is what we know about the avocado: ${readFileText}\nCreated on ${new Date().toISOString()}`;
+//     fs.writeFileSync('./txt/output.txt', textOut);
+//     console.log('File written');
+// }
+// synchronousCall();
+function asynchronousCall() {
+    fs_1.default.readFile('./txt/start.txt', 'utf-8', (err, data1) => {
+        fs_1.default.readFile(`./txt/${data1}.txt`, 'utf-8', (err, data2) => {
+            console.log(data2);
+            fs_1.default.readFile(`./txt/append.txt`, 'utf-8', (err, data3) => {
+                console.log(data3);
+                fs_1.default.writeFile('./txt/final.txt', `${data2}\n${data3}`, 'utf-8', () => {
+                    console.log('File written');
+                });
+            });
+        });
+    });
+}
+asynchronousCall();
+console.log('Will read file!');
+//# sourceMappingURL=app.js.map
