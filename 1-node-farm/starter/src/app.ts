@@ -30,31 +30,42 @@ __dirname = path.resolve(path.dirname(''));
 // asynchronousCall();
 // console.log('Will read file!');
 
-const fileData = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
-const productData = readApiResponse(fileData);
+const templateOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
+const templateCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8');
+const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
+const productData = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
+const products = readApiResponse(productData);
 
 function createBasicServer(): void {
     const server = http.createServer((req, res) => {
         const pathName = req.url as PathName;
         switch (pathName) {
             case '/':
-            case '/overview':
-                res.end('This is the OVERVIEW');
+            case '/overview': {
+                res.writeHead(200, { 'Content-type': 'text/html' });
+
+                const cardsHtml = products.map(el => replaceTemplate(templateCard, el)).join('');
+                const output = templateOverview.replace('{%PRODUCTCARDS%}', cardsHtml);
+                res.end(output);
                 break;
-            case '/product':
+            }
+            case '/product': {
                 res.end('This is the PRODUCT');
                 break;
-            case '/api':
+            }
+            case '/api': {
                 res.writeHead(200, { 'Content-type': 'application/json' });
-                res.write(JSON.stringify(productData));
+                res.write(JSON.stringify(products));
                 res.end();
                 break;
-            default:
+            }
+            default: {
                 res.writeHead(404, {
                     'Content-type': 'text/html'
                 });
                 res.end('<h1>404 Page not found</h1>');
                 break;
+            }
         }
     });
 
@@ -67,6 +78,22 @@ createBasicServer();
 function readApiResponse(data: string): Product[] {
     const product = JSON.parse(data) as Product[];
     return product;
+}
+
+function replaceTemplate(templateCard: string, product: Product): string {
+    let output = templateCard.replace(/{%PRODUCTNAME%}/g, product.productName);
+    output = output.replace(/{%PRODUCTIMAGE%}/g, product.image);
+    output = output.replace(/{%PRODUCTPRICE%}/g, product.price);
+    output = output.replace(/{%PRODUCTNUTRIENTS%}/g, product.nutrients);
+    output = output.replace(/{%PRODUCTQUANTITY%}/g, product.quantity);
+    output = output.replace(/{%PRODUCTLOCATION%}/g, product.from);
+    output = output.replace(/{%PRODUCTDESCRIPTION%}/g, product.description);
+    output = output.replace(/{%ID%}/g, product.id.toString());
+
+    if (!product.organic) {
+        output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
+    }
+    return output;
 }
 
 type PathName = '/overview' | '/product' | '/' | '/api';
