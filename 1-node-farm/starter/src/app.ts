@@ -1,6 +1,7 @@
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import url from 'url';
 
 __dirname = path.resolve(path.dirname(''));
 
@@ -36,10 +37,14 @@ const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product
 const productData = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const products = readApiResponse(productData);
 
-function createBasicServer(): void {
+function handler(): void {
     const server = http.createServer((req, res) => {
-        const pathName = req.url as PathName;
-        switch (pathName) {
+        const baseURL = `http://${req.headers.host}`;
+        const requestURL = new URL(req.url, baseURL);
+
+        const pathname = requestURL.pathname as PathName;
+        const query = requestURL.searchParams.get('id');
+        switch (pathname) {
             case '/':
             case '/overview': {
                 res.writeHead(200, { 'Content-type': 'text/html' });
@@ -50,7 +55,9 @@ function createBasicServer(): void {
                 break;
             }
             case '/product': {
-                res.end('This is the PRODUCT');
+                const product = products[query];
+                const output = replaceTemplate(templateProduct, product);
+                res.end(output);
                 break;
             }
             case '/api': {
@@ -73,7 +80,7 @@ function createBasicServer(): void {
         console.log('Listening to requests on port 9000');
     });
 }
-createBasicServer();
+handler();
 
 function readApiResponse(data: string): Product[] {
     const product = JSON.parse(data) as Product[];

@@ -33,27 +33,32 @@ __dirname = path_1.default.resolve(path_1.default.dirname(''));
 const templateOverview = fs_1.default.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
 const templateCard = fs_1.default.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8');
 const templateProduct = fs_1.default.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
-const fileData = fs_1.default.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
-const productData = readApiResponse(fileData);
-function createBasicServer() {
+const productData = fs_1.default.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
+const products = readApiResponse(productData);
+function handler() {
     const server = http_1.default.createServer((req, res) => {
-        const pathName = req.url;
-        switch (pathName) {
+        const baseURL = `http://${req.headers.host}`;
+        const requestURL = new URL(req.url, baseURL);
+        const pathname = requestURL.pathname;
+        const query = requestURL.searchParams.get('id');
+        switch (pathname) {
             case '/':
             case '/overview': {
                 res.writeHead(200, { 'Content-type': 'text/html' });
-                const cardsHtml = productData.map(el => replaceTemplate(templateCard, el)).join('');
+                const cardsHtml = products.map(el => replaceTemplate(templateCard, el)).join('');
                 const output = templateOverview.replace('{%PRODUCTCARDS%}', cardsHtml);
                 res.end(output);
                 break;
             }
             case '/product': {
-                res.end('This is the PRODUCT');
+                const product = products[query];
+                const output = replaceTemplate(templateProduct, product);
+                res.end(output);
                 break;
             }
             case '/api': {
                 res.writeHead(200, { 'Content-type': 'application/json' });
-                res.write(JSON.stringify(productData));
+                res.write(JSON.stringify(products));
                 res.end();
                 break;
             }
@@ -70,7 +75,7 @@ function createBasicServer() {
         console.log('Listening to requests on port 9000');
     });
 }
-createBasicServer();
+handler();
 function readApiResponse(data) {
     const product = JSON.parse(data);
     return product;
