@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const http_1 = __importDefault(require("http"));
 const path_1 = __importDefault(require("path"));
+const slugify_1 = __importDefault(require("slugify"));
+const replaceTemplate_js_1 = require("./modules/replaceTemplate.js");
 __dirname = path_1.default.resolve(path_1.default.dirname(''));
 // function synchronousCall(): void {
 //     const readFileText = fs.readFileSync('./txt/input.txt', 'utf-8');
@@ -35,6 +37,8 @@ const templateCard = fs_1.default.readFileSync(`${__dirname}/templates/template-
 const templateProduct = fs_1.default.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
 const productData = fs_1.default.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const products = readApiResponse(productData);
+const slugs = products.map(el => (0, slugify_1.default)(el.productName, { lower: true }));
+console.log(slugs);
 function handler() {
     const server = http_1.default.createServer((req, res) => {
         const baseURL = `http://${req.headers.host}`;
@@ -45,14 +49,14 @@ function handler() {
             case '/':
             case '/overview': {
                 res.writeHead(200, { 'Content-type': 'text/html' });
-                const cardsHtml = products.map(el => replaceTemplate(templateCard, el)).join('');
+                const cardsHtml = products.map(el => (0, replaceTemplate_js_1.replaceTemplate)(templateCard, el)).join('');
                 const output = templateOverview.replace('{%PRODUCTCARDS%}', cardsHtml);
                 res.end(output);
                 break;
             }
             case '/product': {
                 const product = products[query];
-                const output = replaceTemplate(templateProduct, product);
+                const output = (0, replaceTemplate_js_1.replaceTemplate)(templateProduct, product);
                 res.end(output);
                 break;
             }
@@ -79,19 +83,5 @@ handler();
 function readApiResponse(data) {
     const product = JSON.parse(data);
     return product;
-}
-function replaceTemplate(templateCard, product) {
-    let output = templateCard.replace(/{%PRODUCTNAME%}/g, product.productName);
-    output = output.replace(/{%PRODUCTIMAGE%}/g, product.image);
-    output = output.replace(/{%PRODUCTPRICE%}/g, product.price);
-    output = output.replace(/{%PRODUCTNUTRIENTS%}/g, product.nutrients);
-    output = output.replace(/{%PRODUCTQUANTITY%}/g, product.quantity);
-    output = output.replace(/{%PRODUCTLOCATION%}/g, product.from);
-    output = output.replace(/{%PRODUCTDESCRIPTION%}/g, product.description);
-    output = output.replace(/{%ID%}/g, product.id.toString());
-    if (!product.organic) {
-        output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
-    }
-    return output;
 }
 //# sourceMappingURL=app.js.map

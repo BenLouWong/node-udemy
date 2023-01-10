@@ -1,7 +1,9 @@
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
-import url from 'url';
+import slugify from 'slugify';
+import { replaceTemplate } from './modules/replaceTemplate.js';
+import { Product } from './types/product';
 
 __dirname = path.resolve(path.dirname(''));
 
@@ -36,6 +38,9 @@ const templateCard = fs.readFileSync(`${__dirname}/templates/template-card.html`
 const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
 const productData = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const products = readApiResponse(productData);
+
+const slugs = products.map(el => slugify(el.productName, { lower: true }))
+console.log(slugs);
 
 function handler(): void {
     const server = http.createServer((req, res) => {
@@ -87,32 +92,4 @@ function readApiResponse(data: string): Product[] {
     return product;
 }
 
-function replaceTemplate(templateCard: string, product: Product): string {
-    let output = templateCard.replace(/{%PRODUCTNAME%}/g, product.productName);
-    output = output.replace(/{%PRODUCTIMAGE%}/g, product.image);
-    output = output.replace(/{%PRODUCTPRICE%}/g, product.price);
-    output = output.replace(/{%PRODUCTNUTRIENTS%}/g, product.nutrients);
-    output = output.replace(/{%PRODUCTQUANTITY%}/g, product.quantity);
-    output = output.replace(/{%PRODUCTLOCATION%}/g, product.from);
-    output = output.replace(/{%PRODUCTDESCRIPTION%}/g, product.description);
-    output = output.replace(/{%ID%}/g, product.id.toString());
-
-    if (!product.organic) {
-        output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
-    }
-    return output;
-}
-
 type PathName = '/overview' | '/product' | '/' | '/api';
-
-interface Product {
-    id: number;
-    productName: string;
-    image: string;
-    from: string;
-    nutrients: string;
-    quantity: string;
-    price: string;
-    organic: boolean;
-    description: string;
-}
