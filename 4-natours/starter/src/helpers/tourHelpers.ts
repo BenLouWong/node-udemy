@@ -1,4 +1,11 @@
+import { Request, Response, NextFunction } from "express";
+import { ToursResource } from "../services/toursResource";
 import { Tours } from "../types/apiTypes";
+import fs from 'fs';
+
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/../../dev-data/data/tours-simple.json`, 'utf-8'));
+
+export const tourDataService = new ToursResource(checkIfTours(tours));
 
 export function checkIfTours(tours: unknown): Tours[] {
     if (!isTours(tours)) {
@@ -6,6 +13,29 @@ export function checkIfTours(tours: unknown): Tours[] {
     }
 
     return tours;
+}
+
+export function checkPayloadBody(req: Request, res: Response, next: NextFunction): Response {
+    console.log('Checking Payload Body');
+    const { name, price } = req.body as Tours;
+    if (!name || !price) {
+        return res.status(406).json({
+            status: 'fail',
+            message: req.body
+        });
+    }
+    next();
+}
+
+export function checkTourId(req: Request, res: Response, next: NextFunction): Response {
+    console.log('Check Tour ID');
+    if (+req.params.id > checkIfTours(tours).length) {
+        return res.status(404).json({
+            status: 'fail',
+            message: 'Invalid ID'
+        });
+    }
+    next();
 }
 
 function isTours(tours: unknown): tours is Tours[] {

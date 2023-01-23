@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { ToursResource } from "../services/toursResource";
-import fs from 'fs';
-import { checkIfTours } from "../helpers/tourHelpers";
+import { checkPayloadBody, checkTourId, tourDataService } from "../helpers/tourHelpers";
 
 export const router = Router();
-console.log('parsing tours');
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/../../dev-data/data/tours-simple.json`, 'utf-8'));
-console.log('tours parsed');
-const tourDataService = new ToursResource(checkIfTours(tours));
+
+router.use((req, res, next) => {
+    console.log('Loading tour middleware');
+    next();
+});
+router.param('id', checkTourId);
 
 router.route('/')
     .get(tourDataService.getAllTours)
-    .post(tourDataService.createTour);
+    .post(checkPayloadBody, tourDataService.createTour);
 
 router.route('/:id')
     .get(tourDataService.getTourById)
