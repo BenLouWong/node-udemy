@@ -8,7 +8,6 @@ export const app = express();
 
 function handler(): void {
     dotenv.config({ path: './config.env' });
-    console.log(process.env);
 
     if (process.env.NODE_ENV === 'development') {
         app.use(morgan('dev'));
