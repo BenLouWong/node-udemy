@@ -12,7 +12,21 @@ export class ToursResource {
 
     public getAllTours = async (req: Request, res: Response) => {
         try {
-            const tours = await this.Tour.find();
+            // Filtering
+            const query = { ...req.query };
+            const excludedQueryFields = ['page', 'sort', 'limit', 'fields'];
+            for (const field of excludedQueryFields) {
+                delete query[field];
+            }
+
+            // Advanced filtering
+            let queryStr = JSON.stringify(query);
+            queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+            console.log(JSON.parse(queryStr));
+
+            console.log(req.query, query);
+            const tours = await this.Tour.find(JSON.parse(queryStr));
+
             res.status(200).json({
                 status: 'success',
                 results: tours.length,
@@ -22,7 +36,7 @@ export class ToursResource {
             res.status(404).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
     };
 
@@ -37,7 +51,7 @@ export class ToursResource {
             res.status(404).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
     };
 
@@ -46,7 +60,7 @@ export class ToursResource {
             const tour = await this.Tour.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
                 runValidators: true
-            })
+            });
 
             res.status(200).json({
                 status: 'success',
@@ -56,13 +70,13 @@ export class ToursResource {
             res.status(404).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
     };
 
     public deleteTour = async (req: Request, res: Response) => {
         try {
-            await this.Tour.findByIdAndDelete(req.params.id)
+            await this.Tour.findByIdAndDelete(req.params.id);
             res.status(204).json({
                 status: 'success',
                 data: null
@@ -71,7 +85,7 @@ export class ToursResource {
             res.status(404).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
     };
 
@@ -88,7 +102,7 @@ export class ToursResource {
             res.status(400).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
     };
 
@@ -102,7 +116,7 @@ export class ToursResource {
             res.status(400).json({
                 status: 'fail',
                 message: error
-            })
+            });
         }
-    }
+    };
 }
